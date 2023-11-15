@@ -1,3 +1,14 @@
+import os, environ
+
+env = environ.Env()
+
+# Build paths inside the project like this: os.path.join(BASE_DIR, ...)
+BASE_DIR = os.path.dirname(os.path.dirname(__file__))
+CORE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
+# Take environment variables from .env file
+environ.Env.read_env(os.path.join(BASE_DIR, 'env_file'))
+
 try:
     from django.urls import path
     from django.shortcuts import redirect
@@ -38,7 +49,7 @@ class MsalViews:
         self.logger.debug(f"{self.prefix}{self.endpoints.redirect}: request received. will process params")
         return self.ms_identity_web.process_auth_redirect(
             redirect_uri=request.build_absolute_uri(reverse(self.endpoints.redirect)),
-            afterwards_go_to_url=reverse('index'))
+            afterwards_go_to_url=reverse(os.environ.get('REDIRECT_URL_MS')))
 
     def sign_out(self, request):
         self.logger.debug(f"{self.prefix}{self.endpoints.sign_out}: signing out username: {request.identity_context_data.username}")
@@ -47,4 +58,4 @@ class MsalViews:
     def post_sign_out(self, request):
         self.logger.debug(f"{self.prefix}{self.endpoints.post_sign_out}: clearing session for username: {request.identity_context_data.username}")
         self.ms_identity_web.remove_user(request.identity_context_data.username)  # remove user auth from session on successful logout
-        return redirect(reverse('index'))                   # take us back to the home page
+        return redirect(reverse(os.environ.get('REDIRECT_URL_MS')))                   # take us back to the home page
